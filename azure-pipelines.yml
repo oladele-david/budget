@@ -20,6 +20,13 @@ steps:
       docker tag budget-app:latest $(containerRegistry)/$(dockerImageName):latest
       docker push $(containerRegistry)/$(dockerImageName):latest
     displayName: 'Build and Push Docker Image'
+  
+  - script: |
+      echo "ACR_USERNAME: $(ACR_USERNAME)"
+      echo "ACR_PASSWORD: $(ACR_PASSWORD)"
+      echo "containerRegistry: $(containerRegistry)"
+    displayName: 'Display Debug Information'
+
 
   # Log in to Azure Container Registry (ACR)
   - script: |
