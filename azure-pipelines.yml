@@ -38,7 +38,6 @@ steps:
   # Deploy to Azure App Service
   - task: AzureWebAppContainer@1
     inputs:
-      azureSubscription: 'AzureRM-Connection'
+      azureSubscription: 'Microsoft Azure Sponsorship(c857a1ea-6e95-466f-806b-e3e7a7489c87)'
       appName: 'budget-app'
-      containers: |
-        $(containerRegistry)/$(dockerImageName):latest
+      containers: '$(containerRegistry)/$(dockerImageName):latest'
