@@ -6,18 +6,39 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-steps:
-  - task: Checkout@2
+variables:
+  containerRegistry: 'budgetacr.azurecr.io'
+  dockerImageName: 'budget-app'
 
+steps:
+  # Clone the repository (correct task version)
+  - task: Checkout@1  # Use Checkout@1, the correct version of the task
+
+  # Build the Docker image
   - script: |
       docker-compose build
-      docker tag budget-app:latest budgetacr.azurecr.io/budget-app:latest
-      docker push budgetacr.azurecr.io/budget-app:latest
+      docker tag budget-app:latest $(containerRegistry)/$(dockerImageName):latest
+      docker push $(containerRegistry)/$(dockerImageName):latest
     displayName: 'Build and Push Docker Image'
 
+  # Log in to Azure Container Registry (ACR)
+  - script: |
+      echo $(ACR_PASSWORD) | docker login $(containerRegistry) -u $(ACR_USERNAME) --password-stdin
+    env:
+      ACR_USERNAME: $(DOCKER_REGISTRY_USERNAME)
+      ACR_PASSWORD: $(DOCKER_REGISTRY_PASSWORD)
+    displayName: 'Log in to ACR'
+
+  # Push the Docker image to ACR
+  - script: |
+      docker tag app:latest $(containerRegistry)/$(dockerImageName):latest
+      docker push $(containerRegistry)/$(dockerImageName):latest
+    displayName: 'Push Docker Image to ACR'
+
+  # Deploy to Azure App Service
   - task: AzureWebAppContainer@1
     inputs:
-      azureSubscription: 'c857a1ea-6e95-466f-806b-e3e7a7489c87'
+      azureSubscription: 'AzureRM-Connection'
       appName: 'budget-app'
       containers: |
-        budgetacr.azurecr.io/budget-app:latest
+        $(containerRegistry)/$(dockerImageName):latest
