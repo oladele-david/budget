@@ -1,0 +1,23 @@
+trigger:
+  branches:
+    include:
+      - main  # Trigger the pipeline when changes are pushed to the main branch
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - task: Checkout@2
+
+  - script: |
+      docker-compose build
+      docker tag budget-app:latest budgetacr.azurecr.io/budget-app:latest
+      docker push budgetacr.azurecr.io/budget-app:latest
+    displayName: 'Build and Push Docker Image'
+
+  - task: AzureWebAppContainer@1
+    inputs:
+      azureSubscription: 'c857a1ea-6e95-466f-806b-e3e7a7489c87'
+      appName: 'budget-app'
+      containers: |
+        budgetacr.azurecr.io/budget-app:latest
