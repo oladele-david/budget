@@ -7,45 +7,41 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  containerRegistry: 'budgetacr.azurecr.io'
-  dockerImageName: 'budget-app'
-  group: mybudgetacr-group
+  containerRegistry: 'budgetacr.azurecr.io'  # Azure Container Registry URL
+  dockerImageName: 'budget-app'             # Docker image name
 
 steps:
-  # Clone the repository (correct task version)
+  # Clone the repository
   - task: Checkout@1  # Use Checkout@1, the correct version of the task
 
-  # Build the Docker image
+  # Build and Push Docker Image to ACR
   - script: |
       docker-compose build
       docker tag budget-app:latest $(containerRegistry)/$(dockerImageName):latest
-      docker push $(containerRegistry)/$(dockerImageName):latest
-    displayName: 'Build and Push Docker Image'
-  
-  - script: |
-      echo "ACR_USERNAME: $(ACR_USERNAME)"
-      echo "ACR_PASSWORD: $(ACR_PASSWORD)"
-      echo "containerRegistry: $(containerRegistry)"
-    displayName: 'Display Debug Information'
-
+    displayName: 'Build Docker Image'
 
   # Log in to Azure Container Registry (ACR)
   - script: |
-      echo $(ACR_PASSWORD) | docker login $(containerRegistry) -u $(ACR_USERNAME) --password-stdin
+      echo $(DOCKER_REGISTRY_PASSWORD) | docker login $(containerRegistry) -u $(DOCKER_REGISTRY_USERNAME) --password-stdin
     env:
-      ACR_USERNAME: $(DOCKER_REGISTRY_USERNAME)
-      ACR_PASSWORD: $(DOCKER_REGISTRY_PASSWORD)
-    displayName: 'Log in to ACR'
+      DOCKER_REGISTRY_USERNAME: "mybudgetacr"  # Set your Docker username
+    displayName: 'Log in to Azure Container Registry'
 
   # Push the Docker image to ACR
   - script: |
-      docker tag app:latest $(containerRegistry)/$(dockerImageName):latest
       docker push $(containerRegistry)/$(dockerImageName):latest
     displayName: 'Push Docker Image to ACR'
+
+  # Display Debug Information
+  - script: |
+      echo "ACR_USERNAME: $(DOCKER_REGISTRY_USERNAME)"
+      echo "ACR_PASSWORD: $(DOCKER_REGISTRY_PASSWORD)"
+      echo "containerRegistry: $(containerRegistry)"
+    displayName: 'Display Debug Information'
 
   # Deploy to Azure App Service
   - task: AzureWebAppContainer@1
     inputs:
-      azureSubscription: 'Microsoft Azure Sponsorship(c857a1ea-6e95-466f-806b-e3e7a7489c87)'
+      azureSubscription: 'Microsoft Azure Sponsorship(c857a1ea-6e95-466f-806b-e3e7a7489c87)'  # Azure service connection name
       appName: 'budget-app'
       containers: '$(containerRegistry)/$(dockerImageName):latest'
