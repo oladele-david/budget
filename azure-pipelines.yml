@@ -9,6 +9,7 @@ pool:
 variables:
   containerRegistry: 'budgetacr.azurecr.io'
   dockerImageName: 'budget-app'
+  group: mybudgetacr-group
 
 steps:
   # Clone the repository (correct task version)
